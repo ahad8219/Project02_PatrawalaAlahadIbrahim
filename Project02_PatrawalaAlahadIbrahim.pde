@@ -1,0 +1,283 @@
+import controlP5.*;
+
+Bird b;
+StartButton bu;
+JumpButton bu2;
+DownButton bu3;
+RadioButton r1;
+ControlP5 slide,textArea,bcolor;
+ColorPicker cp; 
+Pipe p;
+stickMan m;
+int gameState;
+int slider = 100;
+String name;
+int wid=400;
+int rez = 20;
+int score = 0;
+boolean jumping = false;
+PVector gravity = new PVector(0, 0.5);
+float treex=-150;
+float cloudx=-150;
+ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+PFont font;
+boolean snow=false;
+
+void setup() 
+{
+  size(500, 500);
+  b = new Bird();
+  bu= new StartButton();
+  bu2=new JumpButton();
+  bu3= new DownButton();
+  m=new stickMan();
+  r1=new RadioButton();
+  pipes.add(new Pipe());
+  font=loadFont("04b19-48.vlw");
+  gameState=0;
+  frameRate(30);
+  smooth();
+}
+
+void draw() 
+{
+  bg();
+  textFont(font);
+  switch (gameState)
+  {
+    case 0:
+   flush();
+   clear();
+    bg0();
+    break;
+    
+   case 1:
+   flush();
+   clear();
+   bg1();
+   break;
+
+   case 2:
+   flush();
+   clear();
+   bg2();
+   break;
+  }
+}
+
+void mouseClicked()
+{
+bu.start1();
+bu2.upButton();
+bu3.downButton();
+if (r1.snow()==true)
+{
+snow=true;
+}  
+}
+
+void bg()
+{
+background(slider); //sky
+stroke(255);
+fill(255);  
+ellipse(150,150,75,50);
+ellipse(200,125,125,100);
+ellipse(250,150,75,50);
+stroke(0);
+strokeWeight(2);
+cloudx += 0.3; //increases the cloud's x by 0.3 every iteration
+if(cloudx>650)
+{ //resets cloud when it leaves the screen
+ cloudx=-150;
+}
+stroke(255);
+fill(255);  
+ellipse(cloudx-50,150,75,50);
+ellipse(cloudx,125,125,100);
+ellipse(cloudx+50,150,75,50);
+stroke(0);  
+//tree
+treex += 1; //increases the tree's x by 0.3 every iteration
+if(treex>650)
+{ 
+//resets tree when it leaves the screen
+treex=-150;
+}
+fill(126,67,4);
+rect(treex,250,25,200);
+fill(75,126,4);
+ellipse(treex+12.5,200,200,200);
+}
+
+void bg0()
+{
+bg();
+fill(0,193,66);
+noStroke();
+rect(0,375,500,125); //grass
+slide = new ControlP5(this);
+slide.addSlider("slider").setPosition(200,400).setRange(500,1000);
+stroke(0);
+strokeWeight(25);
+fill(154,205,50);
+text("Flapping Bird",width/2-100,height/2);
+strokeWeight(2);
+bu.drawButton();
+fill(0);
+textSize(26);
+text("Start", width/2-190, height/2+55);
+//b.drawBird();
+bcolor= new ControlP5(this);
+cp=bcolor.addColorPicker("picker").setPosition(60, 100).setColorValue(color(255, 128, 0, 128));
+r1.drawButton();
+}
+
+public void controlEvent(ControlEvent c) 
+{
+  // when a value change from a ColorPicker is received, extract the ARGB values
+  // from the controller's array value
+  if(c.isFrom(cp)) {
+    int r = int(c.getArrayValue(0));
+    int g = int(c.getArrayValue(1));
+    int b = int(c.getArrayValue(2));
+    int a = int(c.getArrayValue(3));
+    color col = color(r,g,b,a);
+    //println("event\talpha:"+a+"\tred:"+r+"\tgreen:"+g+"\tblue:"+b+"\tcol"+col);
+  }
+}
+
+void keyPressed() {
+  switch(key) {
+    case('1'):
+    // method A to change color
+    cp.setArrayValue(new float[] {120, 0, 120, 255});
+    break;
+    case('2'):
+    // method B to change color
+    cp.setColorValue(color(255, 0, 0, 255));
+    break;
+  }
+}
+
+void bg1()
+{
+background(slider);  
+fill(0,193,66);
+noStroke();
+rect(0,375,500,125); //grass  
+if (snow==true)
+{
+smooth();
+frameRate(30);
+strokeWeight(2);
+r1.snowfall();
+}
+if (r1.count>52)
+{
+fill(r1.count,255,r1.count);
+noStroke();
+rect(0,375,500,125); //grass
+r1.count=r1.count+50;
+}
+else
+{
+fill(0,193,66);
+noStroke();
+rect(0,375,1000,125); //grass
+}
+strokeWeight(2);
+cloudx += 0.3; //increases the cloud's x by 0.3 every iteration
+if(cloudx>650)
+{ //resets cloud when it leaves the screen
+ cloudx=-150;
+}
+stroke(255);
+fill(255);  
+ellipse(cloudx-50,150,75,50);
+ellipse(cloudx,125,125,100);
+ellipse(cloudx+50,150,75,50);
+stroke(0);  
+//tree
+treex += 1; //increases the tree's x by 0.3 every iteration
+if(treex>650)
+{ 
+//resets tree when it leaves the screen
+treex=-150;
+}
+fill(126,67,4);
+rect(treex,250,25,200);
+fill(75,126,4);
+ellipse(treex+12.5,200,200,200);
+bu2.drawButton();
+bu3.drawButton();
+if (frameCount % 75 == 0)
+{
+pipes.add(new Pipe());
+}
+if (keyPressed) 
+  {    
+    PVector up = new PVector(0, -5);
+    b.applyForce(up);
+  }
+b.update();
+b.drawBird();
+boolean safe = true;
+for (int i = pipes.size() - 1; i >= 0; i--) {
+Pipe p = pipes.get(i);
+p.update();
+if (p.hits(b)) 
+{
+p.show(true);
+safe = false;
+}
+else 
+{
+p.show(false);
+}
+if (p.x < -p.w) 
+{
+pipes.remove(i);
+}
+}
+fill(255, 0, 0);
+textSize(64);
+text(score, width/2, 50);  
+if (safe) 
+{
+score++;   
+} 
+else 
+{
+gameState=2;
+}  
+}
+
+ void bg2()
+ {
+    clear();
+    background(slider); //sky
+    b.drawBird();
+    fill(0,193,66);
+noStroke();
+rect(0,375,1000,125); //grass
+
+stroke(255);
+fill(255);  
+ellipse(150,150,75,50);
+ellipse(200,125,125,100);
+ellipse(250,150,75,50);
+    textSize(32);
+    fill(255);
+    //text("Congratulations"+textArea.get(Textfield.class, "a").getText(),25,250);
+    text("Your final score is: "+score,25,350);
+    text("GAME OVER", width/2-textWidth("GAME OVER")/2, height/2-32); 
+    stroke(0);
+    strokeWeight(2);
+    //bu.drawButton();
+    fill(0);
+    //textSize(20);
+    //text("Restart", width/2-240, height/2+30);
+    scale(0.5);
+    m.drawStick();    
+}
